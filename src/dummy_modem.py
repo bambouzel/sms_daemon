@@ -4,7 +4,7 @@ class DummyModem:
     def __init__(self, port, baud, timeout=5):
         self.port=port
         self.baud=baud
-        self.logfile=open("modem.log","w")
+        self.logfile=open("debug/modem.log","a")
         self.timeout=timeout
         self.portstr='{}:{}'.format(port, baud)
 
