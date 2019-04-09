@@ -1,19 +1,19 @@
 import sys
 
 class DummyModem:
-    def __init__(self, port, baud, timeout=5):
+    def __init__(self, logger, port, baud, timeout=5):
         self.port=port
         self.baud=baud
-        self.logfile=open("debug/modem.log","a")
+        self.logger=logger
         self.timeout=timeout
         self.portstr='{}:{}'.format(port, baud)
 
     def close(self):
-        self.logfile.close()
+        self.logger.info("modem closed")
         return
 
     def write(self, data):
-        self.logfile.write(data.decode("utf-8"))
+        self.logger.info('modem: {}'.format(data.decode("utf-8")))
         self.request=data.decode("utf-8")
         return
 

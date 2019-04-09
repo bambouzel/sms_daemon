@@ -12,8 +12,7 @@
             "args": [
                 "/dev/ttyAMA0",
                 "9600",
-                "${workspaceFolder}/debug/folder",
-                "${workspaceFolder}/debug/sms_daemon.log"
+                "${workspaceFolder}/.debug/folder"
             ],
             "console": "integratedTerminal"
         },

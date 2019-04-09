@@ -10,9 +10,9 @@ class Sms:
         self.modem=None
         self.port=port
         self.baud=baud
-        #self.modem=serial.Serial(self.port, self.baud, timeout=5)
-        self.modem=DummyModem(self.port, self.baud, timeout=5)
         self.logger=logger
+        #self.modem=serial.Serial(self.port, self.baud, timeout=5)
+        self.modem=DummyModem(logger, self.port, self.baud, timeout=5)
         self.messageHandler=MessageHandler(logger)
 
     def __enter__(self):

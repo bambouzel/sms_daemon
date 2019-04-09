@@ -41,6 +41,9 @@ class Sms_daemon:
         with Sms(self.port, self.baud, self.logger) as self.sms:
             while True:
                 try:
+                    # heartbeat
+                    self.hartbeat()
+
                     # handle messages to be sent
                     messages=os.listdir(self.sendFolder)
                     for message in messages:
@@ -54,6 +57,10 @@ class Sms_daemon:
                     time.sleep(1)
                 except (KeyboardInterrupt):
                     exit()
+
+    def hartbeat(self) :
+        with open(os.path.join(self.folder, "heartbeat.txt"), 'w') as heartbeat_file:
+            heartbeat_file.write(str(time.time()))
 
     def sendSMS(self, message) :
         os.rename(os.path.join(self.sendFolder, message), os.path.join(self.sendingFolder, message))
@@ -74,8 +81,8 @@ class Sms_daemon:
         return
 
 def main(arguments):
-    if (len(arguments) == 4):
-        daemon=Sms_daemon(arguments[0], arguments[1], arguments[2], Logger(arguments[3], 0)) 
+    if (len(arguments) == 3):
+        daemon=Sms_daemon(arguments[0], arguments[1], arguments[2], Logger(os.path.join(arguments[2], "sms_daemon.log"), 0)) 
         daemon.start()
     else:
         print('Usage sms_daemon <port> <baud> <folder> <logfile>')
