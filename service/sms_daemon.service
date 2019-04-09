@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Type=idle
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /opt/sms_daemon/src/sms_daemon.py /dev/ttyAMA0 9600 /opt/sms_daemon/folder /opt/sms_daemon/sms.log
+ExecStart=/usr/bin/python3 /opt/sms_daemon/src/sms_daemon.py /dev/ttyAMA0 9600 /opt/sms_daemon/folder
 Restart=always
 
 [Install]
