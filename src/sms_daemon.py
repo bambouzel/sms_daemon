@@ -81,7 +81,7 @@ class Sms_daemon:
 
 def main(arguments):
     if (len(arguments) == 3):
-        daemon=Sms_daemon(arguments[0], arguments[1], arguments[2], Logger(os.path.join(arguments[2], "sms_daemon.log"), 0)) 
+        daemon=Sms_daemon(arguments[0], arguments[1], arguments[2], Logger(arguments[2], "sms_daemon.log", 0)) 
         daemon.start()
     else:
         print('Usage sms_daemon <port> <baud> <folder> <logfile>')

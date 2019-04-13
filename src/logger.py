@@ -1,7 +1,9 @@
+import os
 import time
 
 class Logger:
-    def __init__(self, logfile, type):
+    def __init__(self, directory, logfile, type):
+        self.directory=directory
         self.logfile=logfile
         self.type=type
 
@@ -22,5 +24,8 @@ class Logger:
         self.write('[{}] {}\n'.format(now, message))
     
     def write(self, message):
-        with open(self.logfile, "a") as handle:
-            handle.write(message)
+        if os.path.exists(self.directory):
+            with open(os.path.join(self.directory, self.logfile), "a") as handle:
+                handle.write(message)
+        else:
+            print(message)

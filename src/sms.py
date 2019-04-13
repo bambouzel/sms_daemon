@@ -14,7 +14,7 @@ class Sms:
         #self.modem=serial.Serial(self.port, self.baud, timeout=5)
         self.modem=DummyModem(logger, self.port, self.baud, timeout=5)
         self.messageHandler=MessageHandler(logger)
-        self.need_to_register = False
+        self.need_to_register = True
 
     def __enter__(self):
         return self
@@ -39,7 +39,7 @@ class Sms:
                         messages = self.waitForResponse("AT+CMGL=\"ALL\"")
                         if "OK" in messages:
                             return self.handleMessages(messages)
-        self.need_to_register = False
+        self.need_to_register = True
         return False
 
     def handleMessages(self, messages):
@@ -63,7 +63,7 @@ class Sms:
                     return True
             else:
                 return True
-        self.need_to_register = False
+        self.need_to_register = True
         return False
 
     def handleData(self, message):
@@ -109,7 +109,7 @@ class Sms:
         return read_buffer
 
     def waitForNetwork(self):
-        if (not self.need_to_register):
+        if (self.need_to_register):
             self.logger.log('Registering on: {}'.format(self.modem.portstr)) 
 
             # attention
@@ -134,8 +134,9 @@ class Sms:
             #self.send("AT+CSQ=?")	# signal quality
             #self.send("AT+CSQ")	# signal quality
 
-            self.need_to_register = True
-            return True
+            self.need_to_register = False
+
+        return True
 
     def sendSMSonNetwork(self, recipient, message):
         if "OK" in self.send("AT+CMGF=1"):
@@ -143,5 +144,5 @@ class Sms:
                 self.send(message)
                 self.modem.write(bytes([26]))
                 return True
-        self.need_to_register = False
+        self.need_to_register = True
         return False
