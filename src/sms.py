@@ -14,6 +14,7 @@ class Sms:
         #self.modem=serial.Serial(self.port, self.baud, timeout=5)
         self.modem=DummyModem(logger, self.port, self.baud, timeout=5)
         self.messageHandler=MessageHandler(logger)
+        self.need_to_register = False
 
     def __enter__(self):
         return self
@@ -38,6 +39,7 @@ class Sms:
                         messages = self.waitForResponse("AT+CMGL=\"ALL\"")
                         if "OK" in messages:
                             return self.handleMessages(messages)
+        self.need_to_register = False
         return False
 
     def handleMessages(self, messages):
@@ -46,7 +48,6 @@ class Sms:
             parts=message.split(",")
             if (len(parts)>=6):
                 self.handleMessage(parts[0])
-
         return True
 
     def handleMessage(self, index):
@@ -59,7 +60,11 @@ class Sms:
                 self.handleData(message)
                 if "OK" in self.send("AT+CMGD="+trimmed):
                     self.logger.log('Delete message: {}'.format(trimmed))
-        return True
+                    return True
+            else:
+                return True
+        self.need_to_register = False
+        return False
 
     def handleData(self, message):
         # get data between last quotes and "OK" and strip it
@@ -104,30 +109,33 @@ class Sms:
         return read_buffer
 
     def waitForNetwork(self):
-        self.logger.log('Connected to: {}'.format(self.modem.portstr)) 
-        # attention
-        if "OK" not in self.send("AT"):
-            return False
-        # no echo
-        if "OK" not in self.send("ATE0"):
-            return False
-        # verbose error log
-        if "OK" not in self.send("AT+CMEE=2"):
-            return False
-        #
-        # enter SIM PIN to register on network
-        #
-        if "READY" not in self.send("AT+CPIN?"):
-            self.send("AT+CPIN=1111")
-            if "READY" not in self.send("AT+CPIN?"):
+        if (not self.need_to_register):
+            self.logger.log('Registering on: {}'.format(self.modem.portstr)) 
+
+            # attention
+            if "OK" not in self.send("AT"):
                 return False
+            # no echo
+            if "OK" not in self.send("ATE0"):
+                return False
+            # verbose error log
+            if "OK" not in self.send("AT+CMEE=2"):
+                return False
+            #
+            # enter SIM PIN to register on network
+            #
+            if "READY" not in self.send("AT+CPIN?"):
+                self.send("AT+CPIN=1111")
+                if "READY" not in self.send("AT+CPIN?"):
+                    return False
 
-        #self.send("AT+CREG?")	# registered to network?
-        #self.send("AT+COPS?")	# registered to which network
-        #self.send("AT+CSQ=?")	# signal quality
-        #self.send("AT+CSQ")	# signal quality
+            #self.send("AT+CREG?")	# registered to network?
+            #self.send("AT+COPS?")	# registered to which network
+            #self.send("AT+CSQ=?")	# signal quality
+            #self.send("AT+CSQ")	# signal quality
 
-        return True
+            self.need_to_register = True
+            return True
 
     def sendSMSonNetwork(self, recipient, message):
         if "OK" in self.send("AT+CMGF=1"):
@@ -135,4 +143,5 @@ class Sms:
                 self.send(message)
                 self.modem.write(bytes([26]))
                 return True
+        self.need_to_register = False
         return False

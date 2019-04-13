@@ -76,8 +76,7 @@ class Sms_daemon:
         return
 
     def checkSMS(self) :
-        with Sms(self.port, self.baud, self.logger) as sms:
-            sms.checkSMS()
+        self.sms.checkSMS()
         return
 
 def main(arguments):
