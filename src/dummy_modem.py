@@ -1,19 +1,18 @@
+from modem import Modem
 import sys
 
-class DummyModem:
-    def __init__(self, logger, port, baud, timeout=5):
-        self.port=port
-        self.baud=baud
-        self.logger=logger
-        self.timeout=timeout
-        self.portstr='{}:{}'.format(port, baud)
+class DummyModem(Modem):
+    def __init__(self, port, baud, logger):
+        super().__init__(port, baud, logger)
+        self.timeout=1
+        self.logger.info("dummy modem opened: {}:{}".format(self.port, self.baud))
 
     def close(self):
-        self.logger.info("modem closed")
+        self.logger.info("dummy modem closed")
         return
 
     def write(self, data):
-        self.logger.info('modem: {}'.format(data.decode("utf-8")))
+        self.logger.log('modem: {}'.format(data.decode("utf-8")))
         self.request=data.decode("utf-8")
         return
 
