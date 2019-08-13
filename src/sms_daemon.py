@@ -85,7 +85,7 @@ class Sms_daemon:
     def sendSMS(self, sms, message) :
         os.rename(os.path.join(self.sendFolder, message), os.path.join(self.sendingFolder, message))
         with open(os.path.join(self.sendingFolder, message), 'r') as sms_file:
-            data=sms_file.read().replace('\n', '')
+            data=sms_file.read()
             recipientAndMessage=data.split(':', 1)
             if (len(recipientAndMessage) == 2):
                 self.logger.info('sending to {} [{}].'.format(recipientAndMessage[0],recipientAndMessage[1]))
