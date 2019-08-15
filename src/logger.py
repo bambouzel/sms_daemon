@@ -30,5 +30,8 @@ class Logger:
     def write(self, message):
         if (self.print):
             print(message)
-        with open(self.logfile, "a") as handle:
-            handle.write(message)
+        try:
+            with open(self.logfile, "a") as handle:
+                handle.write(message)
+        except:
+            print(message)

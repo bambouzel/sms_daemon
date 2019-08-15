@@ -9,7 +9,7 @@ from logger import Logger
 
 class Sms_daemon:
     def __init__(self, port, baud, folder, logger, sleep=60):
-        self.version='07082019.20:55'
+        self.version='15082019.14:43'
         self.sms_wrapper=None
         self.port=port
         self.baud=baud
@@ -42,7 +42,7 @@ class Sms_daemon:
         return folder
 
     def start(self):
-        self.logger.info('Starting daemon {} on {}:{} and workspace {}.'.format(self.version, self.port, self.baud, self.folder))
+        self.logger.info('starting daemon {} on {}:{} and workspace {}.'.format(self.version, self.port, self.baud, self.folder))
         while True:
             try:
                 # heartbeat
@@ -55,7 +55,7 @@ class Sms_daemon:
                         self.sendSMS(self.get_sms_wrapper(), message)
                 
                 # check for incominging messages
-                self.get_sms_wrapper().checkSMS()
+                self.get_sms_wrapper().checkSMS(self.receivedFolder)
 
                 # heartbeat
                 self.hartbeat()
@@ -104,7 +104,7 @@ def main(arguments):
         log_file=os.path.join(folder, "sms_daemon.log")
         os.remove(log_file) if os.path.exists(log_file) else None
 
-        daemon=Sms_daemon(arguments[0], arguments[1], folder, Logger(log_file, Logger.INFO)) 
+        daemon=Sms_daemon(arguments[0], arguments[1], folder, Logger(log_file, Logger.LOG)) 
         daemon.start()
     else:
         print('usage sms_daemon <port> <baud> <folder> <logfile>')

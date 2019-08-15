@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -26,30 +27,32 @@ class Sms:
             return self.sendSMSonNetwork(recipient, message)
         return False
 
-    def checkSMS(self):
+    def checkSMS(self, receivedFolder):
         if (self.waitForNetwork()):
             if "OK" in self.send("AT+CMGF=1"):
                 # set message store to SM
                 if "OK" in self.waitForResponse("AT+CPMS=?"):
                     if "OK" in self.send("AT+CPMS=\"SM\",\"SM\",\"SM\""):
-                        # retrieve all messages
-                        messages = self.waitForResponse("AT+CMGL=\"ALL\"")
-                        if "OK" in messages:
-                            if (self.handleMessages(messages)):
-                                return True
+                        # first delete all read and sent messages
+                        if "OK" in self.send("AT+CMGD=1,3"):
+                            # retrieve all messages
+                            messages = self.waitForResponse("AT+CMGL=\"ALL\"")
+                            if "OK" in messages:
+                                if (self.handleMessages(messages, receivedFolder)):
+                                    return True
         self.healthy=False
         return False
 
-    def handleMessages(self, messages):
+    def handleMessages(self, messages, receivedFolder):
         messageList=messages.split("+CMGL:")
         for message in messageList:
             parts=message.split(",")
             if (len(parts)>=6):
-                if (not self.handleMessage(parts[0])):
+                if (not self.handleMessage(parts[0], receivedFolder)):
                     return False
         return True
 
-    def handleMessage(self, index):
+    def handleMessage(self, index, receivedFolder):
         trimmed=index.strip()
         self.logger.log('read message: {}'.format(trimmed))
         message=self.waitForResponse("AT+CMGR="+trimmed)
@@ -57,29 +60,47 @@ class Sms:
             parts=message.split(",")
             if (len(parts)>=5):
                 self.handleData(message)
-                if "OK" in self.send("AT+CMGD="+trimmed):
-                    self.logger.log('delete message: {}:{}'.format(trimmed, message))
-                    return True
+                with open(os.path.join(receivedFolder, str(time.time()) + ".log"), 'a+') as msg_file:
+                    msg_file.write(message + "\n")
+                # message will be deleted in a next run (read message)
             else:
                 self.logger.info('ignoring message: {}:{}'.format(trimmed, message))
-                return True
+            return True
         return False
 
     def handleData(self, message):
+        # get data between quotes 3 and 4 -> recipient
+        recipient=self.getQuoted(message, 2)
         # get data between last quotes and "OK" and strip it
         lastQuotes=message.rfind('"')
         if (lastQuotes>0):
             ok=message.rfind('OK')
             if (ok>lastQuotes):
-                self.messageHandler.handle(message[lastQuotes+1:ok].strip())
+                self.messageHandler.handle(self, recipient, message[lastQuotes+1:ok].strip())
+
+    def getQuoted(self, message, index):
+        i=1
+        start=0
+        while i<=index:
+            start=message.find("\"", start)
+            if (start==-1):
+                return None
+            end=message.find("\"", start+1)
+            if (end==-1):
+                return None
+            if (i==index):
+                return message[start+1:end]
+            start=end+1
+            i=i+1
+        return None
 
     def send(self, command):
-        self.logger.log('Sending: {}'.format(command))
+        self.logger.log('sending: {}'.format(command))
         self.modem.write(command.encode() + b'\r')
         time.sleep(1)
         response=self.modem.read(200)
         answer=response.decode("utf-8")
-        self.logger.log('Received: {}'.format(answer))
+        self.logger.log('received: {}'.format(answer))
         return answer
 
     def waitForResponse(self, command):
