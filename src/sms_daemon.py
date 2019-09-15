@@ -11,7 +11,7 @@ from logger import Logger
 
 class Sms_daemon:
     def __init__(self, port, baud, folder, logger, sleep=60):
-        self.version='15082019.14:43'
+        self.version='15092019.29:43'
         self.sms_wrapper=None
         self.port=port
         self.baud=baud
@@ -66,6 +66,12 @@ class Sms_daemon:
                 # check for incominging messages
                 self.get_sms_wrapper().checkSMS(self.receivedFolder)
 
+                # handle service message
+                messages=os.listdir(self.serviceFolder)
+                for message in messages:
+                    if (os.path.isfile(os.path.join(self.serviceFolder, message))) :
+                        self.service(message)
+
                 # heartbeat
                 self.hartbeat()
 
@@ -115,7 +121,10 @@ class Sms_daemon:
                 self.logger.info('service {} [{}].'.format(command,data))
                 if (command == 'date'):
                     if (platform.system() == 'Linux'):
-                        subprocess.call(['sudo', 'date', '-s', data], shell=True)
+                        dateCommand = 'sudo date -s "{}"'.format(data)
+                        returnCode = subprocess.call(dateCommand, shell=True)
+                        if (returnCode != 0):
+                            self.logger.error('could not set date via {}'.format(dateCommand))
                     else:
                         self.logger.error('service command date not supported')
             else:
