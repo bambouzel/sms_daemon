@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import platform
+import subprocess
 
 from sms import Sms
 from serial_modem import SerialModem
@@ -16,6 +18,7 @@ class Sms_daemon:
         self.logger=logger
         self.sleep=sleep
         self.folder=self.checkFolder(folder)
+        self.serviceFolder=self.checkFolder(os.path.join(folder, 'service'))
         self.sendFolder=self.checkFolder(os.path.join(folder, 'send'))
         self.sendingFolder=self.checkFolder(os.path.join(folder, 'sending'))
         self.sentFolder=self.checkFolder(os.path.join(folder, 'sent'))
@@ -45,6 +48,12 @@ class Sms_daemon:
         self.logger.info('starting daemon {} on {}:{} and workspace {}.'.format(self.version, self.port, self.baud, self.folder))
         while True:
             try:
+                # handle service message
+                messages=os.listdir(self.serviceFolder)
+                for message in messages:
+                    if (os.path.isfile(os.path.join(self.serviceFolder, message))) :
+                        self.service(message)
+
                 # heartbeat
                 self.hartbeat()
 
@@ -75,14 +84,14 @@ class Sms_daemon:
         self.sms_wrapper=Sms(DummyModem(self.port, self.baud, self.logger), self.logger)
         return self.sms_wrapper
 
-    def hartbeat(self) :
+    def hartbeat(self):
         with open(os.path.join(self.folder, "heartbeat.txt"), 'w') as heartbeat_file:
             if (self.sms_wrapper is None):
                 heartbeat_file.write(':'.join([str(time.time()), str(True)]))
             else:
                 heartbeat_file.write(':'.join([str(time.time()), str(self.sms_wrapper.healthy)]))
 
-    def sendSMS(self, sms, message) :
+    def sendSMS(self, sms, message):
         os.rename(os.path.join(self.sendFolder, message), os.path.join(self.sendingFolder, message))
         with open(os.path.join(self.sendingFolder, message), 'r') as sms_file:
             data=sms_file.read()
@@ -94,6 +103,24 @@ class Sms_daemon:
                 self.logger.error('ignoring message: {}'.format(message))
         os.rename(os.path.join(self.sendingFolder, message), os.path.join(self.sentFolder, message))
         return
+
+    def service(self, message):
+        absolutePath = os.path.join(self.serviceFolder, message)
+        with open(absolutePath, 'r') as service_file:
+            contents=service_file.read()
+            commandAndData=contents.split(':', 1)
+            if (len(commandAndData) == 2):
+                command = commandAndData[0]
+                data = commandAndData[1]
+                self.logger.info('service {} [{}].'.format(command,data))
+                if (command == 'date'):
+                    if (platform.system() == 'Linux'):
+                        subprocess.call(['sudo', 'date', '-s', data], shell=True)
+                    else:
+                        self.logger.error('service command date not supported')
+            else:
+                self.logger.error('ignoring service: {}'.format(message))
+        os.remove(absolutePath)
 
 def main(arguments):
     if (len(arguments) == 3):
