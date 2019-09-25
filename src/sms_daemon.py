@@ -114,7 +114,7 @@ class Sms_daemon:
         return
 
     def checkBeat(self):
-        absolutePath = os.path.join(self.folder, 'home_assistant_beat')
+        absolutePath = os.path.join(self.folder, 'home_assistant_beat.txt')
         if (os.path.isfile(absolutePath)):
             self.home_assistant_beat = 0
             os.remove(absolutePath)
