@@ -57,6 +57,9 @@ class Sms_daemon:
                 # heartbeat
                 self.hartbeat()
 
+                # check beat of home assistant
+                self.checkBeat()
+
                 # handle messages to be sent
                 messages=os.listdir(self.sendFolder)
                 for message in messages:
@@ -109,6 +112,16 @@ class Sms_daemon:
                 self.logger.error('ignoring message: {}'.format(message))
         os.rename(os.path.join(self.sendingFolder, message), os.path.join(self.sentFolder, message))
         return
+
+    def checkBeat(self):
+        absolutePath = os.path.join(self.folder, 'home_assistant_beat')
+        if (os.path.isfile(absolutePath)):
+            self.home_assistant_beat = 0
+            os.remove(absolutePath)
+        else:
+            self.home_assistant_beat = self.home_assistant_beat + 1
+            if (self.home_assistant_beat in [5,10,15]):
+                self.get_sms_wrapper().sendSMS('+32495640653', 'No running homeassistant found!')
 
     def service(self, message):
         absolutePath = os.path.join(self.serviceFolder, message)
