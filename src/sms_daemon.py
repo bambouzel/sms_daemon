@@ -11,7 +11,7 @@ from logger import Logger
 
 class Sms_daemon:
     def __init__(self, port, baud, folder, logger, sleep=60):
-        self.version='15092019.29:43'
+        self.version='04102019.13:06'
         self.sms_wrapper=None
         self.port=port
         self.baud=baud
