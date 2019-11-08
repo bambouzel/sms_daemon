@@ -11,12 +11,12 @@ from logger import Logger
 
 class Sms_daemon:
     def __init__(self, port, baud, folder, logger, sleep=60):
-        self.version='04102019.13:06'
         self.sms_wrapper=None
         self.port=port
         self.baud=baud
         self.logger=logger
         self.sleep=sleep
+        self.home_assistant_beat=0
         self.folder=self.checkFolder(folder)
         self.serviceFolder=self.checkFolder(os.path.join(folder, 'service'))
         self.sendFolder=self.checkFolder(os.path.join(folder, 'send'))
@@ -45,7 +45,7 @@ class Sms_daemon:
         return folder
 
     def start(self):
-        self.logger.info('starting daemon {} on {}:{} and workspace {}.'.format(self.version, self.port, self.baud, self.folder))
+        self.logger.info('starting daemon on {}:{} and workspace {}.'.format(self.port, self.baud, self.folder))
         while True:
             try:
                 # handle service message

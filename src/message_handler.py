@@ -33,6 +33,8 @@ class MessageHandler:
             sms.sendSMS(recipient, self.disarm())
         elif ('arm' == message):
             sms.sendSMS(recipient, self.arm())
+        elif ('report' == message):
+            sms.sendSMS(recipient, self.report())
 
     def status(self):
         response = get(URL_STATES + '/alarm_control_panel.home_alarm', headers=HEADERS)
@@ -40,11 +42,18 @@ class MessageHandler:
         return data['state']
 
     def arm(self):
-        response = post(URL_SERVICES + '/alarm_control_panel/alarm_arm_home', headers=HEADERS, json=JSON)
-        data = json.loads(response.text)
-        return data['state']
+        post(URL_SERVICES + '/alarm_control_panel/alarm_arm_home', headers=HEADERS, json=JSON)
+        return 'ok'
 
     def disarm(self):
-        response = post(URL_SERVICES + '/alarm_control_panel/alarm_disarm', headers=HEADERS, json=JSON)
-        data = json.loads(response.text)
-        return data['state']
+        post(URL_SERVICES + '/alarm_control_panel/alarm_disarm', headers=HEADERS, json=JSON)
+        return 'ok'
+
+    def report(self):
+        response = get(URL_STATES, headers=HEADERS)
+        states = json.loads(response.text)
+        result = ''
+        for state in states:
+            if ((state['entity_id'].find('contact') > 0) or (state['entity_id'].find('occupancy') > 0)):
+                result = result + '{} -> {} (link: {}, battery: {})\n'.format(state['attributes']['friendly_name'], state['state'], state['attributes']['linkquality'], state['attributes']['battery'])
+        return result
